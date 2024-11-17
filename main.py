@@ -2,7 +2,7 @@ import pygame
 import sys
 from all_class import Button, Tooltip, Pet, ProgressBar
 from utils import draw_image, draw_text
-import random
+import random 
 
 pygame.init()
 screen_width, screen_height = 800, 600

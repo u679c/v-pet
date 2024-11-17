@@ -55,12 +55,6 @@ class Button:
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
                 self.is_hovered = False
 
-    # def is_clicked(self, mouse_pos, mouse_click):
-    #     # 检查按钮是否被点击
-    #     if self.rect.collidepoint(mouse_pos) and mouse_click[0]:
-    #         pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
-    #     return self.rect.collidepoint(mouse_pos) and mouse_click[0]
-
     def is_clicked(self, mouse_pos, mouse_click):
         current_time = time.time()
         if self.rect.collidepoint(mouse_pos) and mouse_click[0]:

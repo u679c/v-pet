@@ -13,6 +13,7 @@ class Button:
             - color: 按钮颜色
             - hover_color: 鼠标悬停时的颜色
     '''
+
     def __init__(self, x, y, width, height, text, font, color, hover_color):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
@@ -21,6 +22,8 @@ class Button:
         self.hover_color = hover_color
         self.current_color = color
         self.is_hovered = False
+        self.debounce_delay = 2
+        self.last_click_time = 0
 
     def draw(self, surface):
         '''
@@ -52,12 +55,21 @@ class Button:
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
                 self.is_hovered = False
 
-    def is_clicked(self, mouse_pos, mouse_click):
-        # 检查按钮是否被点击
-        if self.rect.collidepoint(mouse_pos) and mouse_click[0]:
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
-        return self.rect.collidepoint(mouse_pos) and mouse_click[0]
+    # def is_clicked(self, mouse_pos, mouse_click):
+    #     # 检查按钮是否被点击
+    #     if self.rect.collidepoint(mouse_pos) and mouse_click[0]:
+    #         pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+    #     return self.rect.collidepoint(mouse_pos) and mouse_click[0]
 
+    def is_clicked(self, mouse_pos, mouse_click):
+        current_time = time.time()
+        if self.rect.collidepoint(mouse_pos) and mouse_click[0]:
+            # 检查上次点击时间和当前时间的差值是否大于防抖延迟时间
+            if current_time - self.last_click_time > self.debounce_delay:
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+                self.last_click_time = current_time
+                return True
+        return False
 
 class Tooltip:
     """

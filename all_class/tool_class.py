@@ -1,5 +1,7 @@
 import time
 import pygame
+from all_class import Food
+from utils import draw_text
 
 
 class Button:
@@ -303,3 +305,39 @@ class ProgressBar:
 
     def update(self, value):
         self.value = max(0, min(value, self.max_value))  # 确保值在有效范围内
+
+# 物品栏物品项目
+class Item:
+    height = 100
+    width = 120
+    def __init__(self, stuff):
+        self.background_color = "#FFFFFF"
+        self.last_click_time = 0
+        self.debounce_delay = 2.4
+        self.stuff = stuff
+        
+    def draw(self, dst_surf, x, y):
+        self.rect = pygame.Rect(x, y, self.width, self.height)
+        
+        pygame.draw.rect(dst_surf,
+                            self.background_color,
+                            (x, y, self.width, self.height)
+                        )
+        
+        dst_surf.blit(self.stuff.img, (x, y))
+        index = 0
+        for key, value in self.stuff.show_items.items():
+            if value:
+                draw_text(dst_surf, key + ": " + str(value), position = (x + 50, y + 10 + (16*index) ), size=12)
+                index += 1
+        
+    def is_clicked(self, mouse_pos, mouse_click):
+        current_time = time.time()
+        if self.rect.collidepoint(mouse_pos) and mouse_click[0]:
+            # 检查上次点击时间和当前时间的差值是否大于防抖延迟时间
+            if current_time - self.last_click_time > self.debounce_delay:
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+                self.last_click_time = current_time
+                return True
+        return False
+        

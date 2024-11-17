@@ -10,7 +10,10 @@ from utils import breathing_animation
 
 
 class Pet:
+    can_sing = True         # 当前状态是否能唱歌: 声音打断
+    is_singing = False      # 当前是否在唱歌
     def __init__(self, name, x, y, size=1):
+        
         """
         初始化宠物属性。
 
@@ -20,7 +23,8 @@ class Pet:
         初始化了宠物的各种状态，包括饥饿度、快乐度、健康状况、等级、经验值、清洁度等，并记录是否生病以及上次互动的时间。
         """
         self.load_img()
-
+        self.load_sound()
+        
         self.name = name
         self.hunger = random.randint(50, 100)     # 饥饿度，0-100，初始随机值
         self.happiness = random.randint(50, 100)  # 快乐度，0-100，初始随机值
@@ -135,6 +139,30 @@ class Pet:
             "好想出去玩。",
             "陪我玩会儿吧。"
         ]
+        # 唱歌时反应
+        self.sing_reactions = [
+            "This is true music.",
+            "生活不易, 猫猫卖艺.",
+            "语言的尽头是音乐.",
+            "音乐是狂野.",
+            "来聆听我的心声吧!"
+        ]
+        # 洗澡时反应
+        self.clean_reactions = [
+            "我爱洗澡, 皮肤好好.",
+            "噜啦啦, 噜啦啦, 噜啦噜啦嘞.",
+            "就我变成泡沫!",
+            "洗澡啦!洗澡啦!",
+            "我要变成想想的猫啦!"
+        ]
+        # 吃药时反应
+        self.medicine_reactions = [
+            "蛙趣, 好苦, 嘤嘤嘤.",
+            "我勒个豆, 好点了诶",
+            "又要吃药啦!",
+            "吃了药能吃颗糖吗",
+            "以后我一定要好好爱惜身体了呜呜"
+        ]
         self.debounce_delay = 2.4
         self.last_click_time = 0
 
@@ -184,7 +212,14 @@ class Pet:
             "pet_sick": pet_sick,
             "pet_grievance": pet_grievance
         }
-
+        
+    def load_sound(self):
+            pet_eat = pygame.mixer.Sound("static/sounds/eat.mp3")
+            pet_true_music = pygame.mixer.Sound("static/sounds/true_music.mp3")
+            self.sounds = {
+                "pet_eat": pet_eat,
+                "pet_true_music":pet_true_music
+            }
     def move_to_(self, position, speed):
         tx, ty = position
         while True:
@@ -224,6 +259,18 @@ class Pet:
         # 从sick_reactions中随机选一个返回
         return random.choice(self.sick_reactions)
     
+    def singing(self, ticks=200):
+        # 从sing_reactions中随机选一个返回
+        return random.choice(self.sing_reactions)
+    
+    def cleaning(self, ticks=200):
+        # 从cleaning_reactions中随机选一个返回
+        return random.choice(self.clean_reactions)
+    
+    def take_medicining(self, ticks=200):
+        # 从take_medicining_reactions中随机选一个返回
+        return random.choice(self.medicine_reactions)
+    
     # 日常闲逛
     def walk(self, surface):
         # TODO 会出界 待修复
@@ -262,14 +309,28 @@ class Pet:
             surface.blit(drawimg, (self.x, self.y))
 
     def feed(self, food: Food):
+        self.can_sing = False
         if self.hunger >= self.max_hunger:
             print ("宠物很饱了")
+        self.sounds["pet_eat"].play()
         self.hunger += food.nutrition
         self.happiness += food.happiness
         self.health += food.health
         self.experience += food.experience
         self.check_all()
 
+
+    def take_medicine(self, medicine):
+        # 喂宠物吃药
+        self.can_sing = False
+        if self.hunger >= self.max_hunger:
+            print ("宠物很健康了")
+        self.happiness += medicine.happiness
+        self.health += medicine.health
+        self.experience += medicine.experience
+        self.check_all()
+        
+        
     def play(self, play_type):
         # 与宠物玩耍，影响快乐度
         if play_type == "fetch":
@@ -295,12 +356,14 @@ class Pet:
         self.check_level_up()
         self.check_all()
 
-    def clean(self):
+    def clean(self, clean_tool):
+        self.can_sing = False
         # 清洁宠物
-        self.cleanliness = 100
+        self.cleanliness = min(100, self.cleanliness + clean_tool.cleanliness)
         print(f"{self.name} 已被清洁干净！")
         self.check_all()
 
+        
     def heal(self):
         # 治疗宠物
         if self.is_sick:
@@ -310,6 +373,13 @@ class Pet:
         else:
             print(f"{self.name} 不需要治疗。")
         self.check_all()
+
+    def sing(self):
+        if self.can_sing:
+            self.sounds["pet_true_music"].stop()
+            self.sounds["pet_true_music"].play()
+            self.is_singing = True
+        
 
     def check_level_up(self):
         # 检查并提升等级
@@ -349,18 +419,23 @@ class Pet:
         # 快乐减少防抖
         if int(next_happiness_decrease) == 0 and (current_time - Pet.last_happiness_decrease_time) >= 10:
             self.happiness = max(0, self.happiness - 10)
+            self.health = max(0, self.health - 15*0.5)
             Pet.last_happiness_decrease_time = current_time
 
         # 清洁度减少防抖
         if int(next_cleanliness_decrease) == 0 and (current_time - Pet.last_cleanliness_decrease_time) >= 10:
             self.cleanliness = max(0, self.cleanliness - 15)
+            self.health = max(0, self.health - 15*0.5)
             Pet.last_cleanliness_decrease_time = current_time
 
     def check_if_sick(self):
-        # 根据状态检查宠物是否生病
-        if self.cleanliness < 20 or self.hunger < 20:
+        # 根据状态检查宠物是否生病 #! 删除: self.cleanliness < 20 or self.hunger < 20
+        if self.health < 20:
             self.is_sick = True
             self.img = self.imgs["pet_sick"]
+        if self.health >= 20:
+            self.is_sick = False
+            
     def get_status(self):
         return "生病" if self.is_sick else "健康"
     def save_data(self):
@@ -426,6 +501,3 @@ class Pet:
         else:
             return str(self.name)
 
-
-if __name__ == "__main__":
-    print(111)

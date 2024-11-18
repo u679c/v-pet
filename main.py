@@ -3,6 +3,7 @@ import sys
 from all_class import Button, Tooltip, Pet, ProgressBar, Food, Item, Stuff, AnimationWipe, Wallet
 from utils import draw_image, draw_text
 import random
+from multiprocessing import Process
 
 pygame.init()
 screen_width, screen_height = 800, 600
@@ -108,7 +109,7 @@ items = [
                     health=5,
                     price=10,
                     experience=10,
-                    img_fp = "static\\img\\apple.png"
+                    img_fp = "static/img/apple.png"
                 )
     ),
     Item(Stuff("药",
@@ -116,7 +117,7 @@ items = [
                     health=20,
                     price=10,
                     experience=10,
-                    img_fp = "static\\img\\medicine.png"
+                    img_fp = "static/img/medicine.png"
                     ,audio_fp="static/sounds/pay.mp3")
     ),
     Item(Stuff("肥皂",
@@ -125,7 +126,7 @@ items = [
                     price=10,
                     experience=10,
                     cleanliness=30,
-                    img_fp = "static\\img\\soap.png",
+                    img_fp = "static/img/soap.png",
                     audio_fp="static/sounds/bubbles.mp3")
     ),
     Item(Stuff("刷子",
@@ -134,7 +135,7 @@ items = [
                     price=10,
                     experience=10,
                     cleanliness=30,
-                    img_fp = "static\\img\\brush.png"
+                    img_fp = "static/img/brush.png"
                     ,audio_fp="static/sounds/soap.mp3")
     ),
     Item(Stuff("麦克风",
@@ -143,7 +144,7 @@ items = [
                     experience=5,
                     cleanliness=-2,
                     money=20,
-                    img_fp="static\\img\\microphone.png")
+                    img_fp="static/img/microphone.png")
     )
 ]
 animations = []
@@ -152,6 +153,10 @@ animation_index = 0
 wallet = Wallet.load_data("static/img/wallet.png", "static/user_data.json")
 wallet_item = Item(wallet)
 wallet_item.height = 60
+
+pygame.mixer.music.load("static/sounds/background_music.mp3") 
+pygame.mixer.music.play(-1)  # 无限循环播放
+pygame.mixer.music.set_volume(0.2)  # 设置音量
 
 def cash_not_enough():
     tooltips.append(Tooltip(
